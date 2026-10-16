@@ -245,7 +245,3 @@ ser executada com a API e a interface em processos separados.
 O projeto está funcional para uso local e continua em evolução. A próxima etapa
 de distribuição planejada é a integração com Electron para gerar a versão
 desktop.
-
-## Licença
-
-Ainda não foi definida uma licença para este projeto.
