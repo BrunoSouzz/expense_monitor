@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .coverage
+monitor_api/data/*.db
+monitor_api/data/*.db-*
 *.egg-info/
 
 node_modules/

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title>Expense Monitor</title>
-  <rect width="64" height="64" rx="18" fill="#79394f"/>
-  <path d="M18 20h20a8 8 0 0 1 8 8v17H26a8 8 0 0 1-8-8V20Z" fill="#efd4dc"/>
-  <path d="M23 28h18M23 35h12M23 42h8" stroke="#79394f" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="47" cy="20" r="8" fill="#c07d91"/>
-  <path d="m43.5 20 2.2 2.2 4.8-5" fill="none" stroke="#fff8f8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="64" height="64" rx="18" fill="#cdb4db"/>
+  <path d="M18 20h20a8 8 0 0 1 8 8v17H26a8 8 0 0 1-8-8V20Z" fill="#fff"/>
+  <path d="M23 28h18M23 35h12M23 42h8" stroke="#5c3d69" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="47" cy="20" r="8" fill="#ffd6a5"/>
+  <path d="m43.5 20 2.2 2.2 4.8-5" fill="none" stroke="#5c3d69" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
