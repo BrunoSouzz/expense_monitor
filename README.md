@@ -11,9 +11,9 @@ O Expense Monitor permite registrar os gastos do dia a dia, acompanhar as
 principais categorias de despesas e controlar as fontes de entrada de dinheiro,
 como salário, mesada ou outros recebimentos.
 
-A interface foi pensada para ser confortável e acessível, com uma paleta em
-tons pastel de vinho e ameixa, temas visuais, configurações de leitura e
-feedback visual para as principais ações.
+A interface foi pensada para ser confortável e acessível, com uma paleta Warm &
+Cozy em creme, lavanda, pêssego e verde sálvia, temas visuais, configurações de
+leitura e feedback visual para as principais ações.
 
 ## Funcionalidades
 
@@ -21,20 +21,27 @@ feedback visual para as principais ações.
 - Categorias, formas de pagamento e observações personalizadas.
 - Cadastro e remoção de entradas financeiras.
 - Cálculo do saldo disponível com base nas entradas e despesas.
-- Card com a categoria de maior gasto e seu percentual do total.
+- Gráfico de gastos por categoria com visualizações de barras, colunas e pizza.
+- Percentuais e valores proporcionais para facilitar a comparação entre categorias.
 - Despesas recorrentes semanais, mensais ou anuais.
-- Processamento de recorrências somente mediante ação explícita do usuário.
+- Fontes de entrada como salário, mesada e freelance.
+- Processamento manual de despesas recorrentes vencidas pelo botão `Recorrentes`.
+- Ícones SVG para os cards de despesas e saldo, além do logo e favicon.
 - Modal personalizado para confirmar exclusões.
 - Temas Pastel, Crepúsculo e Contraste.
 - Controle de tamanho do texto e espaçamento entre linhas.
+- Assistente de voz opcional para leitura do resumo e comandos básicos.
+- Guia de voz que identifica controles e áreas ao passar o cursor ou receber foco.
 - Destaque de foco para navegação por teclado.
 - Cursor ampliado e opção para reduzir animações.
 - Tooltips discretos para orientar a utilização.
 - Scrollbar personalizada e layout responsivo.
 - Persistência dos dados em banco SQLite local.
 
-> O processamento de uma recorrência cria um novo lançamento no sistema. Ele
-> não realiza pagamentos reais em bancos, cartões ou outros serviços externos.
+> O processamento de uma recorrência cria um novo lançamento no sistema. A
+> despesa recorrente é somada novamente aos gastos e reduz o saldo disponível.
+> O sistema não realiza pagamentos reais em bancos, cartões ou outros serviços
+> externos.
 
 ## Tecnologias utilizadas
 
@@ -139,9 +146,12 @@ npm run dev
 1. A interface Vue inicia no Vite e apresenta o dashboard ao usuário.
 2. A interface faz requisições HTTP para a API Node.js.
 3. A API valida os dados recebidos e grava as informações no SQLite.
-4. Ao abrir o dashboard, despesas e entradas são carregadas do banco.
+4. Ao abrir o dashboard, despesas e entradas são carregadas do banco. Recorrências
+   não são processadas sem uma ação explícita do usuário.
 5. O saldo é calculado a partir do total de entradas menos o total de despesas.
-6. As preferências visuais e de acessibilidade são armazenadas no
+6. O gráfico agrupa as despesas por categoria e permite alternar entre barras,
+   colunas e pizza.
+7. As preferências visuais, de acessibilidade e do tipo de gráfico são armazenadas no
    `localStorage` do navegador.
 
 Os dados financeiros não dependem do `localStorage`: eles ficam no banco SQLite
@@ -181,17 +191,27 @@ npm start
 
 ### Recorrências
 
-Uma despesa recorrente possui uma periodicidade e uma próxima data de cobrança.
-A API não cria lançamentos automaticamente ao:
+Despesas recorrentes possuem uma periodicidade e uma próxima data de cobrança.
+As opções disponíveis são:
 
-- iniciar ou reiniciar;
-- consultar despesas;
-- consultar entradas;
-- manter a aplicação aberta.
+- semanal;
+- mensal;
+- anual.
 
-Para gerar os lançamentos vencidos, o usuário precisa clicar no botão
-`Recorrentes` na interface. Essa decisão evita alterações inesperadas no saldo e
-deixa a cobrança sob controle explícito do usuário.
+Quando uma despesa vence, o botão `Recorrentes` pode criar uma nova cobrança não
+recorrente, mantendo o lançamento original como modelo para a próxima cobrança.
+O processamento apenas registra o lançamento no sistema; não realiza pagamentos
+reais em bancos, cartões ou serviços externos.
+
+As recorrências não são processadas automaticamente:
+
+- não são processadas ao iniciar ou reiniciar a API;
+- não são processadas ao consultar despesas ou entradas;
+- não existe temporizador executando cobranças em segundo plano;
+- são processadas somente pelo botão `Recorrentes` na interface.
+
+Essa decisão evita alterações inesperadas no saldo e mantém a cobrança sob
+controle explícito do usuário.
 
 ## Acessibilidade e temas
 
@@ -203,9 +223,74 @@ O menu de acessibilidade permite ajustar:
 - tamanho do cursor;
 - destaque de foco;
 - redução de animações.
+- assistente de voz para leitura, orientação e comandos.
 
 As configurações são aplicadas imediatamente e ficam salvas no navegador para
 que a preferência seja mantida entre acessos.
+
+### Gráficos de despesas
+
+O card `Gastos por categoria` oferece três visualizações:
+
+- **Barras:** comparação horizontal, com preenchimento proporcional e valores
+  percentuais;
+- **Colunas:** comparação vertical com linha de base, linhas de referência,
+  categorias e percentuais;
+- **Pizza:** gráfico circular segmentado com fatias proporcionais, separadores e
+  percentuais dentro do gráfico.
+
+As quatro categorias de maior valor são exibidas no gráfico. A preferência
+selecionada é mantida no navegador.
+
+### Paleta visual
+
+O tema principal usa a identidade Warm & Cozy:
+
+- Warm Cream: `#FDFBF7`;
+- Lavanda Soft: `#CDB4DB`;
+- Pêssego Pastel: `#FFD6A5`;
+- Verde Sálvia: `#C1E1C1`;
+- Charcoal Quente: `#292524`.
+
+Os temas Crepúsculo e Contraste usam variações da mesma identidade, com ajustes
+de fundo, bordas e contraste para preservar a legibilidade.
+
+### Assistente de voz
+
+O menu de acessibilidade possui um assistente de voz opcional. Com ele ativado,
+é possível:
+
+- ouvir um resumo financeiro;
+- iniciar o formulário dizendo “nova despesa”;
+- abrir as preferências dizendo “acessibilidade”;
+- interromper a leitura dizendo “parar”.
+
+A leitura usa a API nativa de síntese de voz do navegador. Os comandos usam a
+API de reconhecimento de voz quando disponível, normalmente no Chrome e no
+Edge. O navegador pode solicitar permissão para usar o microfone. Caso o
+reconhecimento não seja compatível, a leitura em voz alta ainda poderá ser
+utilizada e leitores de tela tradicionais continuarão funcionando normalmente.
+
+Com o assistente de voz ativado, o sistema anuncia somente por áudio uma
+descrição breve do elemento sob o cursor ou em foco, incluindo sua finalidade
+e o conteúdo principal. Não é exibida nenhuma janela flutuante. A mensagem é
+reproduzida após uma pequena pausa para evitar interromper a navegação a cada
+movimento rápido do cursor.
+
+#### Campos de formulário
+
+O guia por voz também reconhece caixas de texto e controles de formulário,
+incluindo:
+
+- descrição, observações e nome da entrada;
+- valor numérico;
+- data;
+- categoria, forma de pagamento e periodicidade;
+- tamanho do texto e demais opções de acessibilidade.
+
+Ao entrar em um campo, o assistente informa o rótulo, o tipo do controle, o
+valor atual ou exemplo indicado no placeholder e, nos campos de seleção, as
+opções disponíveis.
 
 ## Build de produção
 
