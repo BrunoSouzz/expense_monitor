@@ -1,0 +1,46 @@
+{
+  "name": "expense-monitor-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplicativo desktop do Expense Monitor",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "build:interface": "npm --prefix monitor_interface run build",
+    "dist": "npm run build:interface && electron-builder --win",
+    "start": "electron .",
+    "postinstall": "npm --prefix monitor_api install"
+  },
+  "devDependencies": {
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "br.com.expensemonitor.desktop",
+    "productName": "Expense Monitor",
+    "asar": false,
+    "files": [
+      "electron/**/*",
+      "monitor_api/**/*.js",
+      "monitor_api/package.json",
+      "monitor_interface/dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Expense Monitor"
+    }
+  }
+}

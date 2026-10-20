@@ -5,10 +5,12 @@ __pycache__/
 .coverage
 monitor_api/data/*.db
 monitor_api/data/*.db-*
+monitor_api/data/*.json
 *.egg-info/
 
 node_modules/
 dist/
+release/
 .env
 .env.local
 

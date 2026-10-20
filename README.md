@@ -36,7 +36,7 @@ leitura e feedback visual para as principais ações.
 - Cursor ampliado e opção para reduzir animações.
 - Tooltips discretos para orientar a utilização.
 - Scrollbar personalizada e layout responsivo.
-- Persistência dos dados em banco SQLite local.
+- Persistência dos dados em arquivo JSON local.
 
 > O processamento de uma recorrência cria um novo lançamento no sistema. A
 > despesa recorrente é somada novamente aos gastos e reduz o saldo disponível.
@@ -56,16 +56,15 @@ leitura e feedback visual para as principais ações.
 
 - [Node.js](https://nodejs.org/) para execução da API.
 - Módulo nativo `node:http`, sem dependência de framework web.
-- [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) para acesso ao
-  banco SQLite.
-- SQLite para armazenamento local das despesas e entradas.
+- Módulos nativos não são necessários para o armazenamento local.
+- JSON para armazenamento local das despesas e entradas.
 
 ## Estrutura do projeto
 
 ```text
 expense_monitor/
 ├── monitor_api/
-│   ├── data/             # Banco SQLite local (ignorado pelo Git)
+│   ├── data/             # Arquivo JSON local (ignorado pelo Git)
 │   ├── package.json
 │   └── server.js         # API Node.js
 ├── monitor_interface/
@@ -145,7 +144,7 @@ npm run dev
 
 1. A interface Vue inicia no Vite e apresenta o dashboard ao usuário.
 2. A interface faz requisições HTTP para a API Node.js.
-3. A API valida os dados recebidos e grava as informações no SQLite.
+3. A API valida os dados recebidos e grava as informações no arquivo JSON.
 4. Ao abrir o dashboard, despesas e entradas são carregadas do banco. Recorrências
    não são processadas sem uma ação explícita do usuário.
 5. O saldo é calculado a partir do total de entradas menos o total de despesas.
@@ -154,7 +153,7 @@ npm run dev
 7. As preferências visuais, de acessibilidade e do tipo de gráfico são armazenadas no
    `localStorage` do navegador.
 
-Os dados financeiros não dependem do `localStorage`: eles ficam no banco SQLite
+Os dados financeiros não dependem do `localStorage`: eles ficam no arquivo JSON
 para continuar disponíveis depois que a interface ou a API forem reiniciadas.
 
 ## API
@@ -173,15 +172,15 @@ A API possui os seguintes recursos principais:
 | `DELETE` | `/api/v1/income/:id` | Remove uma entrada |
 | `POST` | `/api/v1/recurring/process` | Processa recorrências vencidas |
 
-### Banco de dados
+### Armazenamento dos dados
 
-O banco é criado automaticamente no primeiro início da API em:
+Os dados são criados automaticamente no primeiro início da API em:
 
 ```text
-monitor_api/data/expense-monitor.db
+monitor_api/data/expense-monitor.json
 ```
 
-Essa pasta e os arquivos do banco são ignorados pelo Git. Para alterar o
+Essa pasta e os arquivos de dados são ignorados pelo Git. Para alterar o
 diretório dos dados, defina `EXPENSE_MONITOR_DATA_DIR`:
 
 ```powershell
@@ -308,6 +307,41 @@ localmente:
 npm run preview
 ```
 
+## Gerar o aplicativo `.exe`
+
+O projeto inclui uma versão desktop baseada em Electron. O aplicativo abre a
+interface Vue em uma janela nativa, inicia a API Node.js localmente e armazena
+os dados financeiros em um arquivo JSON na pasta de dados do usuário do Windows.
+
+Na raiz do projeto, instale as dependências do empacotador e gere o instalador:
+
+```powershell
+npm install
+npm run dist
+```
+
+O aplicativo usa um arquivo JSON local para persistência, portanto o
+empacotamento não depende de módulos nativos, Visual Studio ou ferramentas C++.
+
+O instalador NSIS será criado na pasta `release/`. Por padrão, o empacotador
+gera a versão Windows x64 com:
+
+- atalho no Desktop;
+- atalho no Menu Iniciar;
+- escolha do diretório de instalação;
+- nome do produto `Expense Monitor`.
+
+Para apenas abrir a versão desktop durante o desenvolvimento, primeiro gere o
+build da interface e depois execute:
+
+```powershell
+npm run build:interface
+npm start
+```
+
+O modo de desenvolvimento da API e da interface continua funcionando
+separadamente pelos comandos descritos anteriormente.
+
 ## Futuro empacotamento como `.exe`
 
 A aplicação foi organizada para futuramente ser distribuída como um programa
@@ -319,7 +353,7 @@ O empacotamento deverá:
 1. gerar o build do Vue;
 2. abrir `monitor_interface/dist/` em uma janela Electron;
 3. iniciar a API Node.js como um processo local;
-4. salvar o SQLite em `app.getPath('userData')`;
+4. salvar o arquivo JSON em `app.getPath('userData')`;
 5. gerar um instalador Windows no formato `.exe`.
 
 Essa configuração ainda não faz parte do projeto. Atualmente, a aplicação deve

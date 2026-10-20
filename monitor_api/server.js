@@ -1,67 +1,28 @@
 import { createServer } from 'node:http'
 import { randomUUID } from 'node:crypto'
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import Database from 'better-sqlite3'
 
 const port = Number(process.env.PORT || 8000)
 const dataDirectory = process.env.EXPENSE_MONITOR_DATA_DIR || path.join(process.cwd(), 'data')
+const dataFile = path.join(dataDirectory, 'expense-monitor.json')
 mkdirSync(dataDirectory, { recursive: true })
-const database = new Database(path.join(dataDirectory, 'expense-monitor.db'))
 
-database.exec(`
-  CREATE TABLE IF NOT EXISTS expenses (
-    id TEXT PRIMARY KEY,
-    description TEXT NOT NULL,
-    amount REAL NOT NULL CHECK (amount > 0),
-    category TEXT NOT NULL,
-    payment_method TEXT NOT NULL,
-    notes TEXT NOT NULL DEFAULT '',
-    recurring INTEGER NOT NULL DEFAULT 0,
-    recurring_frequency TEXT NOT NULL DEFAULT 'weekly',
-    next_charge_date TEXT,
-    date TEXT NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS income_sources (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    amount REAL NOT NULL CHECK (amount > 0),
-    recurring INTEGER NOT NULL DEFAULT 0,
-    recurring_frequency TEXT NOT NULL DEFAULT 'monthly',
-    next_credit_date TEXT
-  );
-`)
-const expenseColumnsInDatabase = database.prepare('PRAGMA table_info(expenses)').all().map((column) => column.name)
-if (!expenseColumnsInDatabase.includes('recurring_frequency')) database.exec("ALTER TABLE expenses ADD COLUMN recurring_frequency TEXT NOT NULL DEFAULT 'weekly'")
-if (!expenseColumnsInDatabase.includes('next_charge_date')) database.exec('ALTER TABLE expenses ADD COLUMN next_charge_date TEXT')
-const incomeColumnsInDatabase = database.prepare('PRAGMA table_info(income_sources)').all().map((column) => column.name)
-if (!incomeColumnsInDatabase.includes('recurring')) database.exec('ALTER TABLE income_sources ADD COLUMN recurring INTEGER NOT NULL DEFAULT 0')
-if (!incomeColumnsInDatabase.includes('recurring_frequency')) database.exec("ALTER TABLE income_sources ADD COLUMN recurring_frequency TEXT NOT NULL DEFAULT 'monthly'")
-if (!incomeColumnsInDatabase.includes('next_credit_date')) database.exec('ALTER TABLE income_sources ADD COLUMN next_credit_date TEXT')
+const loadStore = () => {
+  if (!existsSync(dataFile)) return { expenses: [], incomeSources: [] }
+  try {
+    const store = JSON.parse(readFileSync(dataFile, 'utf8'))
+    return {
+      expenses: Array.isArray(store.expenses) ? store.expenses : [],
+      incomeSources: Array.isArray(store.incomeSources) ? store.incomeSources : [],
+    }
+  } catch (error) {
+    throw new Error(`Não foi possível ler o arquivo de dados: ${error.message}`)
+  }
+}
 
-const expenseFromRow = (row) => ({
-  id: row.id,
-  description: row.description,
-  amount: row.amount,
-  category: row.category,
-  paymentMethod: row.payment_method,
-  notes: row.notes,
-  recurring: Boolean(row.recurring),
-  recurringFrequency: row.recurring_frequency,
-  nextChargeDate: row.next_charge_date,
-  date: row.date,
-})
-
-const incomeFromRow = (row) => ({
-  id: row.id,
-  name: row.name,
-  amount: row.amount,
-  recurring: Boolean(row.recurring),
-  recurringFrequency: row.recurring_frequency,
-  nextCreditDate: row.next_credit_date,
-})
-const expenseColumns = 'id, description, amount, category, payment_method, notes, recurring, recurring_frequency, next_charge_date, date'
-const incomeColumns = 'id, name, amount, recurring, recurring_frequency, next_credit_date'
+let store = loadStore()
+const saveStore = () => writeFileSync(dataFile, `${JSON.stringify(store, null, 2)}\n`, 'utf8')
 
 const send = (response, statusCode, body = null) => {
   const requestOrigin = response.req.headers.origin
@@ -125,7 +86,6 @@ const validateExpense = (body) => {
     nextChargeDate: body.recurring ? (body.nextChargeDate || addPeriod(body.date, body.recurringFrequency || 'weekly')) : null,
     date: body.date,
   }
-
 }
 
 const validateIncome = (body) => {
@@ -149,39 +109,45 @@ const validateIncome = (body) => {
   }
 }
 
-const chargeRecurringExpenses = () => {
+const processRecurringTransactions = () => {
   const today = new Date().toISOString().slice(0, 10)
-  const recurring = database.prepare(`
-    SELECT ${expenseColumns} FROM expenses
-    WHERE recurring = 1 AND next_charge_date IS NOT NULL AND next_charge_date <= ?
-  `).all(today)
-  const insert = database.prepare(`
-    INSERT INTO expenses (id, description, amount, category, payment_method, notes, recurring, recurring_frequency, next_charge_date, date)
-    VALUES (@id, @description, @amount, @category, @paymentMethod, @notes, 0, @recurringFrequency, NULL, @date)
-  `)
-  const update = database.prepare('UPDATE expenses SET next_charge_date = ? WHERE id = ?')
-  const charge = database.transaction(() => {
-    for (const source of recurring) {
-      insert.run({
-        id: randomUUID(),
-        description: source.description,
-        amount: source.amount,
-        category: source.category,
-        paymentMethod: source.payment_method,
-        notes: `${source.notes ? `${source.notes} · ` : ''}Gerada automaticamente pela recorrência.`,
-        recurringFrequency: source.recurring_frequency,
-        date: today,
-      })
-      let nextChargeDate = addPeriod(source.next_charge_date, source.recurring_frequency)
-      while (nextChargeDate <= today) {
-        nextChargeDate = addPeriod(nextChargeDate, source.recurring_frequency)
-      }
+  let expensesProcessed = 0
+  let incomeProcessed = 0
 
-      update.run(nextChargeDate, source.id)
-    }
-    return recurring.length
-  })
-  return charge()
+  for (const source of store.expenses.filter((expense) => expense.recurring && expense.nextChargeDate && expense.nextChargeDate <= today)) {
+    store.expenses.push({
+      id: randomUUID(),
+      description: source.description,
+      amount: source.amount,
+      category: source.category,
+      paymentMethod: source.paymentMethod,
+      notes: `${source.notes ? `${source.notes} · ` : ''}Gerada automaticamente pela recorrência.`,
+      recurring: false,
+      recurringFrequency: source.recurringFrequency,
+      nextChargeDate: null,
+      date: today,
+    })
+    source.nextChargeDate = addPeriod(source.nextChargeDate, source.recurringFrequency)
+    while (source.nextChargeDate <= today) source.nextChargeDate = addPeriod(source.nextChargeDate, source.recurringFrequency)
+    expensesProcessed += 1
+  }
+
+  for (const source of store.incomeSources.filter((income) => income.recurring && income.nextCreditDate && income.nextCreditDate <= today)) {
+    store.incomeSources.push({
+      id: randomUUID(),
+      name: source.name,
+      amount: source.amount,
+      recurring: false,
+      recurringFrequency: source.recurringFrequency,
+      nextCreditDate: null,
+    })
+    source.nextCreditDate = addPeriod(source.nextCreditDate, source.recurringFrequency)
+    while (source.nextCreditDate <= today) source.nextCreditDate = addPeriod(source.nextCreditDate, source.recurringFrequency)
+    incomeProcessed += 1
+  }
+
+  if (expensesProcessed || incomeProcessed) saveStore()
+  return { expenses: expensesProcessed, income: incomeProcessed }
 }
 
 const server = createServer(async (request, response) => {
@@ -192,38 +158,37 @@ const server = createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/health') return send(response, 200, { status: 'ok' })
   if (request.method === 'POST' && url.pathname === '/api/v1/recurring/process') {
-    const processed = chargeRecurringExpenses()
-    return send(response, 200, { processed: { expenses: processed } })
+    return send(response, 200, { processed: processRecurringTransactions() })
   }
   if (!expenseMatch && !incomeMatch) return send(response, 404, { detail: 'Rota não encontrada' })
 
   if (incomeMatch) {
     if (request.method === 'GET') {
-      const rows = database.prepare(`SELECT ${incomeColumns} FROM income_sources ORDER BY rowid`).all()
-      return send(response, 200, rows.map(incomeFromRow))
+      processRecurringTransactions()
+      return send(response, 200, store.incomeSources)
     }
     if (request.method === 'POST') {
-      const body = await readBody(request)
-      const payload = validateIncome(body)
+      const payload = validateIncome(await readBody(request))
       if (!payload) return send(response, 400, { detail: 'Dados da entrada inválidos' })
       const income = { id: randomUUID(), ...payload }
-      database.prepare(`
-        INSERT INTO income_sources (id, name, amount, recurring, recurring_frequency, next_credit_date)
-        VALUES (@id, @name, @amount, @recurring, @recurringFrequency, @nextCreditDate)
-      `).run({ ...income, recurring: Number(income.recurring) })
+      store.incomeSources.push(income)
+      saveStore()
       return send(response, 201, income)
     }
     if (request.method === 'DELETE') {
-      const result = database.prepare('DELETE FROM income_sources WHERE id = ?').run(incomeMatch[1])
-      if (!result.changes) return send(response, 404, { detail: 'Entrada não encontrada' })
+      const index = store.incomeSources.findIndex((income) => income.id === incomeMatch[1])
+      if (index < 0) return send(response, 404, { detail: 'Entrada não encontrada' })
+      store.incomeSources.splice(index, 1)
+      saveStore()
       return send(response, 204)
     }
     return send(response, 405, { detail: 'Método não permitido' })
   }
 
   if (request.method === 'GET') {
-    const rows = database.prepare(`SELECT ${expenseColumns} FROM expenses ORDER BY date DESC, rowid DESC`).all()
-    return send(response, 200, rows.map(expenseFromRow))
+    processRecurringTransactions()
+    const expenses = [...store.expenses].sort((first, second) => second.date.localeCompare(first.date))
+    return send(response, 200, expenses)
   }
 
   if (request.method === 'POST' || request.method === 'PUT') {
@@ -231,33 +196,27 @@ const server = createServer(async (request, response) => {
     if (!payload) return send(response, 400, { detail: 'Dados da despesa inválidos' })
     if (request.method === 'POST') {
       const expense = { id: randomUUID(), ...payload }
-      database.prepare(`
-        INSERT INTO expenses (id, description, amount, category, payment_method, notes, recurring, date)
-        VALUES (@id, @description, @amount, @category, @paymentMethod, @notes, @recurring, @date)
-      `).run({ ...expense, recurring: Number(expense.recurring) })
-      database.prepare(`
-        UPDATE expenses SET recurring_frequency = @recurringFrequency, next_charge_date = @nextChargeDate WHERE id = @id
-      `).run({ id: expense.id, recurringFrequency: expense.recurringFrequency, nextChargeDate: expense.nextChargeDate })
+      store.expenses.push(expense)
+      saveStore()
       return send(response, 201, expense)
     }
-    const existing = database.prepare('SELECT id FROM expenses WHERE id = ?').get(expenseMatch[1])
-    if (!existing) return send(response, 404, { detail: 'Despesa não encontrada' })
-    database.prepare(`
-      UPDATE expenses
-      SET description = @description, amount = @amount, category = @category,
-          payment_method = @paymentMethod, notes = @notes, recurring = @recurring,
-          recurring_frequency = @recurringFrequency, next_charge_date = @nextChargeDate, date = @date
-      WHERE id = @id
-    `).run({ id: expenseMatch[1], ...payload, recurring: Number(payload.recurring) })
-    return send(response, 200, { id: expenseMatch[1], ...payload })
+    const index = store.expenses.findIndex((expense) => expense.id === expenseMatch[1])
+    if (index < 0) return send(response, 404, { detail: 'Despesa não encontrada' })
+    store.expenses[index] = { id: expenseMatch[1], ...payload }
+    saveStore()
+    return send(response, 200, store.expenses[index])
   }
 
   if (request.method === 'DELETE') {
-    const result = database.prepare('DELETE FROM expenses WHERE id = ?').run(expenseMatch[1])
-    if (!result.changes) return send(response, 404, { detail: 'Despesa não encontrada' })
+    const index = store.expenses.findIndex((expense) => expense.id === expenseMatch[1])
+    if (index < 0) return send(response, 404, { detail: 'Despesa não encontrada' })
+    store.expenses.splice(index, 1)
+    saveStore()
     return send(response, 204)
   }
   return send(response, 405, { detail: 'Método não permitido' })
 })
 
 server.listen(port, () => console.log(`Expense Monitor API rodando em http://localhost:${port}`))
+const recurringTimer = setInterval(processRecurringTransactions, 60 * 1000)
+recurringTimer.unref()
