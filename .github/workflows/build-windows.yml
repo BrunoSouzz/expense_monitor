@@ -1,0 +1,40 @@
+name: Build Windows app
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run API tests
+        working-directory: monitor_api
+        run: npm test
+
+      - name: Build installer and portable .exe
+        working-directory: monitor_desktop
+        run: |
+          npm install
+          npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: expense-monitor-windows
+          path: monitor_desktop/release/*.exe
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: monitor_desktop/release/*.exe

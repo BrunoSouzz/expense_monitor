@@ -1,0 +1,53 @@
+{
+  "name": "expense-monitor-desktop",
+  "productName": "Expense Monitor",
+  "version": "1.0.0",
+  "description": "Expense Monitor para Windows: controle de despesas e saldo, com dados salvos no seu computador.",
+  "author": "BrunoSouzz",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build:web": "npm --prefix ../monitor_interface install && npm --prefix ../monitor_interface run build",
+    "stage": "node scripts/stage.mjs",
+    "start": "npm run build:web && npm run stage && electron .",
+    "dist": "npm run build:web && npm run stage && electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.brunosouzz.expensemonitor",
+    "productName": "Expense Monitor",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.mjs",
+      "app/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Expense-Monitor-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Expense-Monitor-Portable-${version}.${ext}"
+    }
+  }
+}

@@ -1,13 +1,14 @@
 {
   "name": "expense-monitor-api",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
-  "dependencies": {
-    "better-sqlite3": "^13.0.3"
+    "dev": "node --watch server.js",
+    "test": "node --test"
   }
 }

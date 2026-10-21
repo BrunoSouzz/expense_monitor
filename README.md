@@ -81,7 +81,7 @@ expense_monitor/
 
 ### Pré-requisitos
 
-- Node.js 18 ou superior.
+- Node.js 22.13 ou superior (a API usa o SQLite nativo do Node, sem dependências).
 - npm, instalado junto com o Node.js.
 
 ### 1. Iniciar a API
@@ -141,6 +141,25 @@ $env:VITE_API_URL="http://localhost:9000"
 npm run dev
 ```
 
+## Versão para Windows (.exe)
+
+A pasta `monitor_desktop` empacota a API e a interface em um aplicativo Electron:
+ele sobe a API em `127.0.0.1` numa porta livre e abre a interface numa janela própria.
+Os dados ficam em `%APPDATA%\Expense Monitor\data`, fora do programa.
+
+```powershell
+cd monitor_desktop
+npm install
+npm start      # abre o app para testar
+npm run dist   # gera os .exe em monitor_desktop\release (instalador e portátil)
+```
+
+Também é possível gerar os `.exe` sem instalar nada: o workflow
+`.github/workflows/build-windows.yml` roda em **Actions → Build Windows app → Run workflow**
+(ou ao criar uma tag `v*`) e publica os arquivos como artefato.
+
+Para levar dados da versão web, copie `monitor_api/data/expense-monitor.db` para a pasta de dados do app com ele fechado.
+
 ## Como o projeto funciona
 
 1. A interface Vue inicia no Vite e apresenta o dashboard ao usuário.
@@ -164,13 +183,15 @@ A API possui os seguintes recursos principais:
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | `GET` | `/health` | Verifica se a API está funcionando |
-| `GET` | `/api/v1/expenses` | Lista as despesas |
+| `GET` | `/api/v1/expenses?month=AAAA-MM` | Lista as despesas (do mês, se informado) |
 | `POST` | `/api/v1/expenses` | Cria uma despesa |
 | `PUT` | `/api/v1/expenses/:id` | Atualiza uma despesa |
 | `DELETE` | `/api/v1/expenses/:id` | Remove uma despesa |
 | `GET` | `/api/v1/income` | Lista as entradas |
 | `POST` | `/api/v1/income` | Cria uma entrada |
+| `PUT` | `/api/v1/income/:id` | Atualiza uma entrada |
 | `DELETE` | `/api/v1/income/:id` | Remove uma entrada |
+| `GET` | `/api/v1/summary?month=AAAA-MM` | Gasto do mês, por categoria, e saldo (valores calculados em centavos) |
 | `POST` | `/api/v1/recurring/process` | Processa recorrências vencidas |
 
 ### Banco de dados
