@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-labelledby="expenseMonitorTitle">
+  <title id="expenseMonitorTitle">Expense Monitor Logo</title>
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#73497d"/>
+      <stop offset="50%" stop-color="#5c3d69"/>
+      <stop offset="100%" stop-color="#3b2144"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fdfbf7"/>
+    </linearGradient>
+    <linearGradient id="chartGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffd6a5"/>
+      <stop offset="50%" stop-color="#c1e1c1"/>
+      <stop offset="100%" stop-color="#cdb4db"/>
+    </linearGradient>
+    <linearGradient id="coinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe4b8"/>
+      <stop offset="100%" stop-color="#f6bd7b"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background Squircle with soft rim -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)"/>
+  <rect x="2.5" y="2.5" width="59" height="59" rx="15.5" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1"/>
+
+  <!-- Glass Card / Finance Board -->
+  <rect x="12" y="14" width="40" height="38" rx="8" fill="url(#cardGrad)" filter="url(#softGlow)"/>
+
+  <!-- Card Header Strip -->
+  <path d="M12 22C12 17.5817 15.5817 14 20 14H44C48.4183 14 52 17.5817 52 22V24H12V22Z" fill="#eee3f2"/>
+
+  <!-- Mini Grid Lines -->
+  <line x1="18" y1="31" x2="46" y2="31" stroke="#e7dfd8" stroke-width="1" stroke-dasharray="2 2"/>
+  <line x1="18" y1="38" x2="46" y2="38" stroke="#e7dfd8" stroke-width="1" stroke-dasharray="2 2"/>
+  <line x1="18" y1="45" x2="46" y2="45" stroke="#e7dfd8" stroke-width="1" stroke-dasharray="2 2"/>
+
+  <!-- Upward Trend Chart Line with Nodes -->
+  <path d="M18 43L26 35L34 39L44 28" stroke="#5c3d69" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M40 28H44V32" stroke="#5c3d69" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Chart Dots -->
+  <circle cx="18" cy="43" r="2" fill="#5c3d69"/>
+  <circle cx="26" cy="35" r="2" fill="#5c3d69"/>
+  <circle cx="34" cy="39" r="2" fill="#5c3d69"/>
+
+  <!-- Golden Balance Badge (Top Right) -->
+  <g filter="url(#softGlow)">
+    <circle cx="46" cy="15" r="8" fill="url(#coinGrad)"/>
+    <circle cx="46" cy="15" r="7.2" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.6"/>
+    <!-- Currency Spark / Symbol -->
+    <path d="M44.5 13.2C44.5 12.3 45.2 11.8 46 11.8C46.8 11.8 47.5 12.3 47.5 13.2C47.5 14.5 44.5 14.7 44.5 16C44.5 16.8 45.2 17.2 46 17.2C46.8 17.2 47.5 16.7 47.5 16" stroke="#683d0c" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="46" y1="10.8" x2="46" y2="18.2" stroke="#683d0c" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+</svg>
