@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
-import { expensesApi, incomeApi, balanceApi, ApiError } from '../services/api'
+import { expensesApi, incomeApi, balanceApi, recurringApi, backupApi } from '../services/api'
 import { CHART_COLORS } from '../constants/categories'
 import { getCurrentMonthIso, formatMonthLabel } from '../utils/formatters'
+import { exportExpensesToCsv } from '../utils/exportCsv'
 
 export function useFinance() {
   const currentMonthIso = getCurrentMonthIso()
@@ -196,6 +197,77 @@ export function useFinance() {
     selectedStatus.value = 'all'
   }
 
+  // Mutation actions
+  async function saveExpense(expenseData, id = null) {
+    if (id) {
+      await expensesApi.update(id, expenseData)
+    } else {
+      await expensesApi.create(expenseData)
+    }
+    await loadExpenses()
+  }
+
+  async function toggleExpenseStatus(expense) {
+    await expensesApi.toggleStatus(expense.id)
+    expense.status = expense.status === 'paid' ? 'pending' : 'paid'
+  }
+
+  async function deleteExpense(id) {
+    await expensesApi.delete(id)
+    await loadExpenses()
+  }
+
+  async function saveIncome(incomeData, id = null) {
+    if (id) {
+      await incomeApi.update(id, incomeData)
+    } else {
+      await incomeApi.create(incomeData)
+    }
+    await loadIncomeSources()
+  }
+
+  async function deleteIncome(id) {
+    await incomeApi.delete(id)
+    await loadIncomeSources()
+  }
+
+  async function saveInitialBalance(amount) {
+    await balanceApi.update(amount)
+    initialBalance.value = amount
+  }
+
+  async function processRecurring() {
+    const result = await recurringApi.process()
+    await reloadAllData()
+    return result
+  }
+
+  async function exportBackup() {
+    const backup = await backupApi.export()
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `backup_expense_monitor_${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  async function restoreBackup(file) {
+    const text = await file.text()
+    const parsed = JSON.parse(text)
+    await backupApi.restore(parsed)
+    await reloadAllData()
+  }
+
+  function exportCsv() {
+    if (!expenses.value.length) return false
+    const filename = `despesas_${viewAllTime.value ? 'todas' : selectedMonth.value}.csv`
+    return exportExpensesToCsv(expenses.value, filename)
+  }
+
   return {
     currentMonthIso,
     expenses,
@@ -234,5 +306,15 @@ export function useFinance() {
     toggleViewAllTime,
     setChartType,
     clearFilters,
+    saveExpense,
+    toggleExpenseStatus,
+    deleteExpense,
+    saveIncome,
+    deleteIncome,
+    saveInitialBalance,
+    processRecurring,
+    exportBackup,
+    restoreBackup,
+    exportCsv,
   }
 }
