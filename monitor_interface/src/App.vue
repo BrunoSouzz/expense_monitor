@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 // Composables
 import { useFinance } from './composables/useFinance'
@@ -8,7 +8,7 @@ import { useVoiceAssistant } from './composables/useVoiceAssistant'
 import { useToast } from './composables/useToast'
 
 // Models and Validation
-import { validateExpense, validateIncome, validateBalance } from './models/types'
+import { validateExpense, validateIncome, validateBalance, getTodayIso } from './models/types'
 import { formatCurrency } from './utils/formatters'
 
 // Layout Components
@@ -108,9 +108,8 @@ const showIncomeModal = ref(false)
 const editingIncome = ref(null)
 const itemToDelete = ref(null)
 
-const defaultExpenseDate = computed(() => {
-  return finance.todayIso
-})
+// Always use today's date for new expenses
+const defaultExpenseDate = getTodayIso()
 
 // Expense operations
 function openCreateExpense() {
@@ -195,18 +194,6 @@ async function handleSaveIncome(formData) {
   }
 }
 
-// Recurring processing
-async function handleProcessRecurring() {
-  try {
-    const result = await finance.processRecurring()
-    const expCount = result?.processed?.expenses || 0
-    const incCount = result?.processed?.income || 0
-    showToast(`Recorrências processadas: ${expCount} despesas e ${incCount} entradas geradas.`, 'success')
-  } catch (err) {
-    showToast(err.message, 'error')
-  }
-}
-
 // Delete confirmation handling
 function askDelete(item, type) {
   itemToDelete.value = { ...item, type }
@@ -286,7 +273,7 @@ onMounted(async () => {
     <!-- Toast Notification -->
     <AppToast :toast="toast" />
 
-    <!-- Site Header & Accessibility Settings Modal -->
+    <!-- Site Header & Settings Modal -->
     <SiteHeader
       :api-online="finance.apiOnline.value"
       :show-settings="showSettings"
