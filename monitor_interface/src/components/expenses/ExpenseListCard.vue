@@ -2,6 +2,7 @@
 import ExpenseFilterToolbar from './ExpenseFilterToolbar.vue'
 import ExpenseItem from './ExpenseItem.vue'
 import { CATEGORIES_LIST } from '../../constants/categories'
+import { formatCurrency } from '../../utils/formatters'
 
 defineProps({
   expenses: {
@@ -44,6 +45,14 @@ defineProps({
     type: Array,
     default: () => CATEGORIES_LIST,
   },
+  overdueCount: {
+    type: Number,
+    default: 0,
+  },
+  overdueTotal: {
+    type: Number,
+    default: 0,
+  },
 })
 
 defineEmits([
@@ -61,11 +70,23 @@ defineEmits([
 </script>
 
 <template>
-  <section class="expenses-card" data-guide="Lista detalhada de despesas com opções de busca e filtro.">
+  <section class="expenses-card">
     <div class="expenses-header">
-      <div>
+      <div class="header-titles">
         <h2>Despesas de {{ monthDisplayLabel }}</h2>
-        <p>Monitore suas contas e marque como pagas conforme forem quitadas.</p>
+        <span class="expenses-count-badge">
+          {{ expenses.length }} {{ expenses.length === 1 ? 'lançamento' : 'lançamentos' }}
+        </span>
+        <button
+          v-if="overdueCount > 0"
+          type="button"
+          class="alert-overdue-pill"
+          :class="{ active: selectedStatus === 'overdue' }"
+          title="Clique para filtrar apenas despesas atrasadas"
+          @click="$emit('update:selectedStatus', selectedStatus === 'overdue' ? 'all' : 'overdue')"
+        >
+          ⚠️ {{ overdueCount }} atrasada{{ overdueCount > 1 ? 's' : '' }} ({{ formatCurrency(overdueTotal) }})
+        </button>
       </div>
       <button class="primary-button small" @click="$emit('open-create')">+ Nova Despesa</button>
     </div>
@@ -103,7 +124,7 @@ defineEmits([
     </div>
 
     <div v-else-if="!filteredExpenses.length" class="empty-state">
-      <p>Nenhuma despesa corresponde aos filtros aplicados.</p>
+      <p>Nenhuma despesa encontrada para os filtros aplicados.</p>
       <button class="text-button" @click="$emit('clear-filters')">Limpar filtros</button>
     </div>
 

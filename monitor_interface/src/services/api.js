@@ -34,9 +34,10 @@ export async function request(path, options = {}) {
 }
 
 export const expensesApi = {
-  list(month) {
+  list(month, status) {
     const query = new URLSearchParams()
     if (month) query.set('month', month)
+    if (status) query.set('status', status)
     const qs = query.toString()
     return request(`/api/v1/expenses${qs ? `?${qs}` : ''}`)
   },
@@ -88,8 +89,9 @@ export const incomeApi = {
 }
 
 export const balanceApi = {
-  get() {
-    return request('/api/v1/balance')
+  get(month) {
+    const qs = month ? `?month=${encodeURIComponent(month)}` : ''
+    return request(`/api/v1/balance${qs}`)
   },
   update(initialBalance) {
     return request('/api/v1/balance', {

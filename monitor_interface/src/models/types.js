@@ -29,6 +29,18 @@
  */
 
 /**
+ * Returns today's date formatted as YYYY-MM-DD using local time
+ * @returns {string}
+ */
+export function getTodayIso() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * Factory function for a new Expense model
  * @param {string} [defaultDate]
  * @returns {Expense}
@@ -38,12 +50,17 @@ export function createDefaultExpense(defaultDate) {
     description: '',
     amount: '',
     category: 'Alimentação',
-    paymentMethod: 'Cartão de débito',
+    paymentMethod: 'Pix',
     status: 'paid',
     notes: '',
+    date: defaultDate || getTodayIso(),
+    entryType: 'single', // 'single' | 'recurring' | 'installment'
     recurring: false,
     recurringFrequency: 'monthly',
-    date: defaultDate || new Date().toISOString().slice(0, 10),
+    installments: 2,
+    installmentType: 'total', // 'total' | 'installment_value'
+    isCustomCategory: false,
+    customCategoryName: '',
   }
 }
 
@@ -57,6 +74,7 @@ export function createDefaultIncome() {
     amount: '',
     recurring: false,
     recurringFrequency: 'monthly',
+    date: getTodayIso(),
   }
 }
 
@@ -76,6 +94,15 @@ export function validateExpense(expense) {
   }
   if (!expense.date) {
     return { valid: false, message: 'A data da despesa é obrigatória.' }
+  }
+  if (expense.isCustomCategory && (!expense.customCategoryName || !expense.customCategoryName.trim())) {
+    return { valid: false, message: 'Por favor, escreva o nome da nova categoria.' }
+  }
+  if (expense.entryType === 'installment') {
+    const n = Number(expense.installments)
+    if (!Number.isInteger(n) || n < 2 || n > 72) {
+      return { valid: false, message: 'O número de parcelas deve ser entre 2 e 72.' }
+    }
   }
   return { valid: true }
 }

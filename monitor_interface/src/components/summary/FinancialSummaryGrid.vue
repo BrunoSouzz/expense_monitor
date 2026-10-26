@@ -12,6 +12,10 @@ defineProps({
     type: Number,
     required: true,
   },
+  rollover: {
+    type: Number,
+    default: 0,
+  },
   totalIncome: {
     type: Number,
     required: true,
@@ -40,6 +44,14 @@ defineProps({
     type: Number,
     required: true,
   },
+  overdueCount: {
+    type: Number,
+    default: 0,
+  },
+  overdueTotal: {
+    type: Number,
+    default: 0,
+  },
   projectedFinalBalance: {
     type: Number,
     required: true,
@@ -58,6 +70,7 @@ defineEmits(['open-balance-modal', 'open-income-form', 'edit-income', 'delete-in
     <AvailableFundsCard
       :available-funds="availableFunds"
       :initial-balance="initialBalance"
+      :rollover="rollover"
       :total-income="totalIncome"
       :income-sources="incomeSources"
       @open-balance-modal="$emit('open-balance-modal')"
@@ -72,6 +85,8 @@ defineEmits(['open-balance-modal', 'open-income-form', 'edit-income', 'delete-in
       :paid-percentage="paidPercentage"
       :paid-expenses="paidExpenses"
       :pending-expenses="pendingExpenses"
+      :overdue-count="overdueCount"
+      :overdue-total="overdueTotal"
     />
 
     <ProjectedBalanceCard

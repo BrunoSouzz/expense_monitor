@@ -1,11 +1,25 @@
 export const CATEGORIES_LIST = [
   'Alimentação',
-  'Moradia',
-  'Transporte',
-  'Lazer',
-  'Saúde',
-  'Educação',
-  'Contas',
+  'Supermercado',
+  'Moradia & Aluguel',
+  'Contas de Consumo (Luz/Água/Gás)',
+  'Internet & Telefone',
+  'Transporte & Combustível',
+  'Saúde & Farmácia',
+  'Educação & Cursos',
+  'Lazer & Entretenimento',
+  'Assinaturas & Streaming',
+  'Cartão de Crédito',
+  'Compras Pessoais',
+  'Vestuário & Calçados',
+  'Pets & Veterinário',
+  'Serviços & Diarista',
+  'Investimentos & Reserva',
+  'Empréstimos & Dívidas',
+  'Impostos & Tributos',
+  'Viagens & Hospedagem',
+  'Doações & Presentes',
+  'Manutenção & Reformas',
   'Outros',
 ]
 
@@ -20,8 +34,8 @@ export const PAYMENT_METHODS = [
 ]
 
 export const RECURRING_FREQUENCIES = [
+  { value: 'monthly', label: 'Mensal (Cobrança todo mês)' },
   { value: 'weekly', label: 'Semanal' },
-  { value: 'monthly', label: 'Mensal' },
   { value: 'yearly', label: 'Anual' },
 ]
 
@@ -30,6 +44,10 @@ export const CHART_COLORS = [
   'var(--support)',
   'var(--success)',
   'var(--accent-dark)',
+  '#f87171',
+  '#60a5fa',
+  '#fbbf24',
+  '#34d399',
 ]
 
 export const SORT_OPTIONS = [
@@ -41,6 +59,7 @@ export const SORT_OPTIONS = [
 
 export const STATUS_OPTIONS = [
   { value: 'all', label: 'Todos os status' },
-  { value: 'paid', label: 'Apenas Pagas' },
   { value: 'pending', label: 'Apenas A Pagar' },
+  { value: 'paid', label: 'Apenas Pagas' },
+  { value: 'overdue', label: '⚠️ Apenas Atrasadas' },
 ]

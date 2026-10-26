@@ -1588,3 +1588,445 @@ button {
     gap: 0;
   }
 }
+
+/* ==========================================================================
+   Clean UI & New Features (Overdue, Installments, Recurring, Custom Category)
+   ========================================================================== */
+
+/* Overdue Badge (Tagzinha vermelha de atrasado) */
+.badge-overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #f87171;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+.expense-row.is-overdue {
+  border-left: 4px solid #ef4444 !important;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.expense-row.is-overdue:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.text-overdue {
+  color: #dc2626 !important;
+}
+
+.status-overdue-btn {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5 !important;
+}
+
+.status-overdue-btn:hover {
+  background: #fee2e2 !important;
+}
+
+/* Alert Overdue Pill in Header */
+.alert-overdue-pill {
+  border: 1px solid #f87171;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.alert-overdue-pill:hover,
+.alert-overdue-pill.active {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Category & Installment Badge Pills */
+.badge-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+
+.badge-tag-pill.recurring {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.badge-tag-pill.installment {
+  background: var(--support-soft);
+  color: var(--support-dark);
+}
+
+.expense-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.header-titles {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.expenses-count-badge {
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--surface-soft);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+/* Clean Header */
+.clean-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.clean-icon-btn {
+  font-size: 1.1rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+
+.clean-icon-btn:hover {
+  background: var(--surface-hover);
+}
+
+/* Clean Cards */
+.clean-card {
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.metric-sub-clean {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.card-badge-clean {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface-soft);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.breakdown-legend-clean {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.legend-overdue-clean {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.projected-status-card-clean {
+  margin-top: 10px;
+  font-size: 0.82rem;
+}
+
+.status-positive-clean span {
+  display: block;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.status-positive-clean small,
+.status-negative-clean small {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.85;
+  margin-top: 3px;
+}
+
+/* Incomes dropdown in available card */
+.income-sources-toggle-box {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.toggle-incomes-btn {
+  background: transparent;
+  border: 0;
+  font-size: 0.75rem;
+  color: var(--accent-dark);
+  font-weight: 700;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.toggle-incomes-btn:hover {
+  text-decoration: underline;
+}
+
+.income-list-dropdown {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.income-item-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  background: var(--surface-soft);
+  border-radius: 6px;
+}
+
+/* Collapsible Charts */
+.clean-chart-card {
+  transition: all 0.2s ease;
+}
+
+.chart-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill-toggle-chart-btn {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pill-toggle-chart-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+}
+
+.chart-expanded-content {
+  margin-top: 18px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Clean Modal Form Enhancements */
+.clean-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+}
+
+.form-header-clean h2 {
+  margin: 2px 0 16px;
+  font-size: 1.35rem;
+  color: var(--text);
+}
+
+.clean-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.btn-quick-today {
+  border: 0;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-quick-today:hover {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.clean-input,
+.clean-select,
+.clean-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease;
+}
+
+.clean-input:focus,
+.clean-select:focus,
+.clean-textarea:focus {
+  outline: none;
+  border-color: var(--accent-dark);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Entry Type Selection (Single, Recurring, Installment) */
+.entry-type-section {
+  margin-bottom: 16px;
+}
+
+.entry-type-pills {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.type-pill-btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.type-pill-btn:hover {
+  background: var(--surface-hover);
+}
+
+.type-pill-btn.active {
+  background: var(--accent-dark);
+  color: #ffffff;
+  border-color: var(--accent-dark);
+}
+
+/* Feature Box for Recurring & Installments */
+.feature-box {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.feature-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.feature-box-badge {
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.feature-box-help {
+  margin: 0 0 10px;
+  font-size: 0.76rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.installment-summary-pill {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--support-soft);
+  color: var(--support-dark);
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px dashed var(--support);
+}
+
+.custom-cat-box {
+  background: var(--accent-soft);
+  border: 1px dashed var(--accent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.clean-submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+

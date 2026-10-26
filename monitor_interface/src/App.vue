@@ -16,7 +16,6 @@ import SiteHeader from './components/layout/SiteHeader.vue'
 import PeriodNavigator from './components/layout/PeriodNavigator.vue'
 
 // Summary Components
-import WelcomeHero from './components/summary/WelcomeHero.vue'
 import FinancialSummaryGrid from './components/summary/FinancialSummaryGrid.vue'
 
 // Charts Component
@@ -110,9 +109,7 @@ const editingIncome = ref(null)
 const itemToDelete = ref(null)
 
 const defaultExpenseDate = computed(() => {
-  return finance.viewAllTime.value
-    ? new Date().toISOString().slice(0, 10)
-    : `${finance.selectedMonth.value}-01`
+  return finance.todayIso
 })
 
 // Expense operations
@@ -294,7 +291,6 @@ onMounted(async () => {
       :api-online="finance.apiOnline.value"
       :show-settings="showSettings"
       @toggle-settings="showSettings = !showSettings"
-      @process-recurring="handleProcessRecurring"
       @open-create="openCreateExpense"
     >
       <template #settings>
@@ -338,13 +334,11 @@ onMounted(async () => {
         @export-csv="handleExportCsv"
       />
 
-      <!-- Welcome Hero -->
-      <WelcomeHero />
-
       <!-- Financial Metrics Summary Grid -->
       <FinancialSummaryGrid
         :available-funds="finance.availableFunds.value"
         :initial-balance="finance.initialBalance.value"
+        :rollover="finance.rollover.value"
         :total-income="finance.totalIncome.value"
         :income-sources="finance.incomeSources.value"
         :total-expenses="finance.totalExpenses.value"
@@ -352,6 +346,8 @@ onMounted(async () => {
         :paid-percentage="finance.paidPercentage.value"
         :paid-expenses="finance.paidExpenses.value"
         :pending-expenses="finance.pendingExpenses.value"
+        :overdue-count="finance.overdueCount.value"
+        :overdue-total="finance.overdueTotal.value"
         :projected-final-balance="finance.projectedFinalBalance.value"
         :current-in-hand-balance="finance.currentInHandBalance.value"
         @open-balance-modal="openBalanceModal"
@@ -360,7 +356,7 @@ onMounted(async () => {
         @delete-income="askDelete($event, 'income')"
       />
 
-      <!-- Category Charts Card -->
+      <!-- Category Charts Card (Collapsible) -->
       <CategoryChartsCard
         :chart-type="finance.chartType.value"
         :category-chart="finance.categoryChart.value"
@@ -380,6 +376,9 @@ onMounted(async () => {
         :selected-category="finance.selectedCategory.value"
         :selected-status="finance.selectedStatus.value"
         :sort-order="finance.sortOrder.value"
+        :categories="finance.allCategories.value"
+        :overdue-count="finance.overdueCount.value"
+        :overdue-total="finance.overdueTotal.value"
         @open-create="openCreateExpense"
         @toggle-status="handleToggleExpenseStatus"
         @edit="openEditExpense"
@@ -398,6 +397,7 @@ onMounted(async () => {
       :show="showExpenseModal"
       :editing-expense="editingExpense"
       :default-date="defaultExpenseDate"
+      :categories="finance.allCategories.value"
       @close="showExpenseModal = false"
       @save="handleSaveExpense"
     />

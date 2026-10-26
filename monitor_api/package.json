@@ -4,9 +4,10 @@
   "description": "API REST leve e independente em Node.js para o Expense Monitor",
   "private": true,
   "type": "module",
+  "main": "main.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js",
+    "start": "node main.js",
+    "dev": "node --watch main.js",
     "test": "node --test test.js"
   },
   "dependencies": {}

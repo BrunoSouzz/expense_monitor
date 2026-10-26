@@ -1,16 +1,20 @@
 import { ref, computed } from 'vue'
 import { expensesApi, incomeApi, balanceApi, recurringApi, backupApi } from '../services/api'
-import { CHART_COLORS } from '../constants/categories'
+import { CATEGORIES_LIST, CHART_COLORS } from '../constants/categories'
 import { getCurrentMonthIso, formatMonthLabel } from '../utils/formatters'
 import { exportExpensesToCsv } from '../utils/exportCsv'
+import { getTodayIso } from '../models/types'
 
 export function useFinance() {
   const currentMonthIso = getCurrentMonthIso()
+  const todayIso = getTodayIso()
 
   // Core state
   const expenses = ref([])
   const incomeSources = ref([])
   const initialBalance = ref(0)
+  const baseInitialBalance = ref(0)
+  const rollover = ref(0)
   const loading = ref(true)
   const apiOnline = ref(true)
   const error = ref('')
@@ -19,10 +23,30 @@ export function useFinance() {
   const selectedMonth = ref(localStorage.getItem('expense-selected-month') || currentMonthIso)
   const viewAllTime = ref(localStorage.getItem('expense-view-all') === 'true')
 
+  // Custom categories list from localStorage
+  const customCategories = ref(JSON.parse(localStorage.getItem('expense-custom-categories') || '[]'))
+
+  function addCustomCategory(cat) {
+    if (!cat || !cat.trim()) return
+    const trimmed = cat.trim()
+    if (!CATEGORIES_LIST.includes(trimmed) && !customCategories.value.includes(trimmed)) {
+      customCategories.value.push(trimmed)
+      localStorage.setItem('expense-custom-categories', JSON.stringify(customCategories.value))
+    }
+  }
+
+  const allCategories = computed(() => {
+    const set = new Set([...CATEGORIES_LIST, ...customCategories.value])
+    expenses.value.forEach((e) => {
+      if (e.category) set.add(e.category)
+    })
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  })
+
   // Filters & Search
   const searchQuery = ref('')
   const selectedCategory = ref('Todas')
-  const selectedStatus = ref('all') // 'all' | 'paid' | 'pending'
+  const selectedStatus = ref('all') // 'all' | 'pending' | 'paid' | 'overdue'
   const sortOrder = ref('date_desc')
 
   // Charts
@@ -67,10 +91,13 @@ export function useFinance() {
 
   async function loadInitialBalance() {
     try {
-      const data = await balanceApi.get()
+      const monthParam = (!viewAllTime.value && selectedMonth.value) ? selectedMonth.value : undefined
+      const data = await balanceApi.get(monthParam)
       apiOnline.value = true
       if (data && typeof data.initialBalance === 'number') {
         initialBalance.value = data.initialBalance
+        baseInitialBalance.value = data.baseInitialBalance ?? data.initialBalance
+        rollover.value = data.rollover ?? 0
       }
     } catch (err) {
       if (err.isNetwork) {
@@ -89,28 +116,28 @@ export function useFinance() {
     return formatMonthLabel(selectedMonth.value, viewAllTime.value)
   })
 
-  function changeMonth(delta) {
+  async function changeMonth(delta) {
     viewAllTime.value = false
     localStorage.setItem('expense-view-all', 'false')
     const [yearStr, monthStr] = selectedMonth.value.split('-')
     const date = new Date(Number(yearStr), Number(monthStr) - 1 + delta, 1)
     selectedMonth.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     localStorage.setItem('expense-selected-month', selectedMonth.value)
-    loadExpenses()
+    await reloadAllData()
   }
 
-  function selectCurrentMonth() {
+  async function selectCurrentMonth() {
     viewAllTime.value = false
     localStorage.setItem('expense-view-all', 'false')
     selectedMonth.value = currentMonthIso
     localStorage.setItem('expense-selected-month', currentMonthIso)
-    loadExpenses()
+    await reloadAllData()
   }
 
-  function toggleViewAllTime() {
+  async function toggleViewAllTime() {
     viewAllTime.value = !viewAllTime.value
     localStorage.setItem('expense-view-all', String(viewAllTime.value))
-    loadExpenses()
+    await reloadAllData()
   }
 
   // Financial Calculations
@@ -119,13 +146,22 @@ export function useFinance() {
   const pendingExpenses = computed(() => expenses.value.filter((i) => i.status === 'pending').reduce((sum, item) => sum + Number(item.amount || 0), 0))
   const totalIncome = computed(() => incomeSources.value.reduce((sum, source) => sum + Number(source.amount || 0), 0))
 
-  // Total available money (Initial balance + extra income)
+  // Overdue expenses
+  const overdueExpenses = computed(() =>
+    expenses.value.filter((e) => e.status === 'pending' && e.date && e.date < todayIso)
+  )
+  const overdueCount = computed(() => overdueExpenses.value.length)
+  const overdueTotal = computed(() =>
+    overdueExpenses.value.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  )
+
+  // Total available money (Initial balance/rollover + extra income)
   const availableFunds = computed(() => Number(initialBalance.value) + Number(totalIncome.value))
 
   // Real current balance (money in hand right now = availableFunds - paidExpenses)
   const currentInHandBalance = computed(() => availableFunds.value - paidExpenses.value)
 
-  // Projected final balance (what will be left after all planned expenses are paid)
+  // Projected final balance (what will be left after all planned expenses are paid - rolls over into next month!)
   const projectedFinalBalance = computed(() => availableFunds.value - totalExpenses.value)
 
   // Progress of paid vs total
@@ -143,7 +179,7 @@ export function useFinance() {
     return Object.entries(totals).sort(([, a], [, b]) => b - a)
   })
 
-  const categoryChart = computed(() => categorySummary.value.slice(0, 4).map(([category, amount]) => ({
+  const categoryChart = computed(() => categorySummary.value.slice(0, 6).map(([category, amount]) => ({
     category,
     amount,
     percentage: totalExpenses.value ? Math.round((amount / totalExpenses.value) * 100) : 0,
@@ -163,7 +199,7 @@ export function useFinance() {
   const pieGradient = computed(() => {
     if (!pieSegments.value.length) return 'var(--surface-soft) 0% 100%'
     return pieSegments.value.map((item) => (
-      `${CHART_COLORS[item.index]} ${item.start}% ${item.end}%, var(--surface) ${item.end}% ${Math.min(item.end + 0.7, 100)}%`
+      `${CHART_COLORS[item.index % CHART_COLORS.length]} ${item.start}% ${item.end}%, var(--surface) ${item.end}% ${Math.min(item.end + 0.7, 100)}%`
     )).join(', ')
   })
 
@@ -179,7 +215,9 @@ export function useFinance() {
     if (selectedCategory.value !== 'Todas') {
       list = list.filter((e) => e.category === selectedCategory.value)
     }
-    if (selectedStatus.value !== 'all') {
+    if (selectedStatus.value === 'overdue') {
+      list = list.filter((e) => e.status === 'pending' && e.date && e.date < todayIso)
+    } else if (selectedStatus.value !== 'all') {
       list = list.filter((e) => e.status === selectedStatus.value)
     }
 
@@ -199,22 +237,27 @@ export function useFinance() {
 
   // Mutation actions
   async function saveExpense(expenseData, id = null) {
+    if (expenseData.isCustomCategory && expenseData.customCategoryName) {
+      expenseData.category = expenseData.customCategoryName.trim()
+      addCustomCategory(expenseData.category)
+    }
     if (id) {
       await expensesApi.update(id, expenseData)
     } else {
       await expensesApi.create(expenseData)
     }
-    await loadExpenses()
+    await reloadAllData()
   }
 
   async function toggleExpenseStatus(expense) {
     await expensesApi.toggleStatus(expense.id)
     expense.status = expense.status === 'paid' ? 'pending' : 'paid'
+    await reloadAllData()
   }
 
   async function deleteExpense(id) {
     await expensesApi.delete(id)
-    await loadExpenses()
+    await reloadAllData()
   }
 
   async function saveIncome(incomeData, id = null) {
@@ -223,17 +266,17 @@ export function useFinance() {
     } else {
       await incomeApi.create(incomeData)
     }
-    await loadIncomeSources()
+    await reloadAllData()
   }
 
   async function deleteIncome(id) {
     await incomeApi.delete(id)
-    await loadIncomeSources()
+    await reloadAllData()
   }
 
   async function saveInitialBalance(amount) {
     await balanceApi.update(amount)
-    initialBalance.value = amount
+    await reloadAllData()
   }
 
   async function processRecurring() {
@@ -269,10 +312,13 @@ export function useFinance() {
   }
 
   return {
+    todayIso,
     currentMonthIso,
     expenses,
     incomeSources,
     initialBalance,
+    baseInitialBalance,
+    rollover,
     loading,
     apiOnline,
     error,
@@ -284,6 +330,11 @@ export function useFinance() {
     selectedStatus,
     sortOrder,
     chartType,
+    allCategories,
+    addCustomCategory,
+    overdueExpenses,
+    overdueCount,
+    overdueTotal,
     totalExpenses,
     paidExpenses,
     pendingExpenses,
